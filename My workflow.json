@@ -1,0 +1,249 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "channel_post"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "642f3d44-535f-4b52-af46-0effdcb9b6c9",
+      "name": "Telegram Trigger",
+      "webhookId": "a635f644-e868-468e-ae4d-59d1a14b961a",
+      "credentials": {
+        "telegramApi": {
+          "id": "B5j0bPnI3YDqSuzI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.document.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "52a6c6ba-6967-4a36-b519-3a4970003f93",
+      "name": "Get a file",
+      "webhookId": "4de98fe6-8d54-4ba6-a298-a970499df0d7",
+      "credentials": {
+        "telegramApi": {
+          "id": "B5j0bPnI3YDqSuzI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-9f3e0b0ece9145aa9c3e67afbc5a41bb"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Ты аналитик. Твоя задача: 1. Написать краткое саммари (3-5 предложений). 2. Выделить 5-10 ключевых слов. Верни ответ СТРОГО в формате JSON: {\\\"summary\\\": \\\"...\\\", \\\"keywords\\\": \\\"...\\\"}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($('Extract from File').item.json.text) }}\n    }\n  ],\n  \"response_format\": {\n    \"type\": \"json_object\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        544,
+        0
+      ],
+      "id": "f751f4b1-c153-447f-ba1d-184d305bfdc1",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Q1kq9yT1wV4lndS0ABefbC281Ujox0VphXYYa_K1_Nw",
+          "mode": "list",
+          "cachedResultName": "VKbot",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Q1kq9yT1wV4lndS0ABefbC281Ujox0VphXYYa_K1_Nw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Q1kq9yT1wV4lndS0ABefbC281Ujox0VphXYYa_K1_Nw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ new Date().toISOString() }}",
+            "summary": "={{ JSON.parse($json.choices[0].message.content).summary }}",
+            "keywords": "={{ JSON.parse($json.choices[0].message.content).keywords }}",
+            "uploader_id": "={{ $('Telegram Trigger').item.json.message.from.username }}",
+            "file_name": "={{ $('Telegram Trigger').item.json.message.document.file_name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "uploader_id",
+              "displayName": "uploader_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "keywords",
+              "displayName": "keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        752,
+        0
+      ],
+      "id": "86de7d8d-ffe8-41dd-a4af-72f8dcc17edd",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xIwCMozk8aCoq6aR",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        0
+      ],
+      "id": "8bfcc65e-8d9a-4337-8507-10462cbeeb8f",
+      "name": "Extract from File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "390d3e0f-14ea-4141-ab3b-8e5f984b3e07",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d8527e9abe62702fbab0f087a367c0f8d8dbcc9ec8ce4f8bc1526b2c583d1522"
+  },
+  "id": "rU5ryqzWlcB9lNCx",
+  "tags": []
+}
